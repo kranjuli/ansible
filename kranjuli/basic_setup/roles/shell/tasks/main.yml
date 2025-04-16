@@ -1,0 +1,9 @@
+---
+- name: "Shell command history is not saved across session"
+  ansible.builtin.template:
+    dest: "/etc/profile.d/disable-shell-history.sh"
+    src: "disable-shell-history.sh.j2"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  when: shell_disable_history | bool

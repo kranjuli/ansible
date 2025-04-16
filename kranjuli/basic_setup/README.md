@@ -7,3 +7,7 @@ Documentation for the collection `basic_setup`.
 ### upgrade_debian_os_packages
 
 The role `upgrade_debian_os_packages` will be used to upgrade debian os packages
+
+### shell
+
+The role `shell` will be used to disable shell history
