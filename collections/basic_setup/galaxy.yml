@@ -43,7 +43,7 @@ tags: []
 dependencies: {}
 
 # The URL of the originating SCM repository
-repository: https://github.com/kranjuli/ansible/basic_setup
+repository: https://github.com/kranjuli/ansible/collections/basic_setup
 
 # The URL to any online docs
 documentation: http://docs.example.com

@@ -14,39 +14,39 @@ ansible-galaxy collection init <namespace>.<collection_name>
 
 # <namespace>/
 #    └── <collection_name>/
-#        ├── playbooks/
-#        │   └── playbook_1.yml
+#        ├── docs/
+#        ├── meta/
+#        ├── plugins/
 #        ├── roles/
-#        │   ├── role_1/
-#        │       ├── tasks/
-#        │           └── main.yml
-#        └── galaxy.yml
-
-# implements roles in the collection
-mkdir <namespace>/<collection_name>/roles/role_1/tasks
-touch <namespace>/<collection_name>/roles/role_1/tasks/main.yml
-# implement the task in main.yml
-
-# implements playbooks in the collection
-mkdir <namespace>/<collection_name>/playbooks
-touch <namespace>/<collection_name>/playbooks/playbook_1.yml
+#        ├── galaxy.yml
+#        └── README.md
+# see chapter below to create a new role and playbook
 ```
 
 #### Build a collection
 
 ```bash
 # build collection 
-ansible-galaxy build
+ansible-galaxy collection build <path_to_collection>
 # collection will be built and compressed to <namespace>-<collection>-<version>.tar.gz 
 ```
 
 #### Install a collection
 
 ```bash
-# install collection 
-ansible-galaxy install <namespace>-<collection>-<version>.tar.gz
-# run playbook
-ansible-playbook <namespace>.<collection>.playbook_1.yml 
+# install local collection
+ansible-galaxy collection install <path_to_local_collection> --force 
+# install collection from tar.gz file
+ansible-galaxy collection install <namespace>-<collection>-<version>.tar.gz --force
+```
+
+#### Remove a collection
+
+```bash
+# show all installed collections included path to collections
+ansible-galaxy collection list
+# remove a collection
+sudo rm -rf /root/.ansible/collections/ansible_collections/<namespace>/<collection_name>
 ```
 
 #### Install ansible dependencies in requirements.yml
@@ -67,7 +67,31 @@ collections:
 ```bash
 ansible-galaxy install -r requirements.yml
 ```
+## Ansible role
 
+```bash
+# create new role in the collection
+ansible-galaxy role init roles/<role_name>
+
+# <namespace>/
+#    └── <collection_name>/
+#        ├── docs/
+#        ├── roles/
+#        |   ├── role_name/
+#        |       ├── defaults/
+#        |       ├── handlers/
+#        |       ├── tasks/
+#        |       ├── templates/
+#        |       ├── tests/
+#        |       ├── vars/
+#        |       └── README.md
+#        |       └── README.md
+#        └── galaxy.yml
+
+# open file <namespace>/<collection_name>/roles/role_name/tasks/main.yml in the collection
+touch <namespace>/<collection_name>/roles/role_name/tasks/main.yml
+# and implement the task in main.yml
+```
 ## Playbook
 
 ### Create a playbook
@@ -81,6 +105,10 @@ Playbook must be created manually.
 #        │   └── playbook_1.yml
 #        ├── roles/
 #        └── galaxy.yml
+
+# implements playbooks in the collection
+mkdir <namespace>/<collection_name>/playbooks
+touch <namespace>/<collection_name>/playbooks/playbook_1.yml
 ```
 
 ### Run a playbook
