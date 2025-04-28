@@ -1,0 +1,9 @@
+{{ ansible_managed | comment }}
+{% if upgrade_packages_pinned_packages is defined %}
+{% for package in upgrade_packages_pinned_packages %}
+Package: {{ package.package_name }}
+Pin: version {{ package.package_version }}
+Pin-Priority: 1001
+
+{% endfor %}
+{% endif %}
