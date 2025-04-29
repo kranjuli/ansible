@@ -1,5 +1,5 @@
 ---
-# vars file for roles/nextcloud_database
+# vars file for roles/database
 database_name: "nextcloud"
 database_user: "admin"
 database_password: "admin"
