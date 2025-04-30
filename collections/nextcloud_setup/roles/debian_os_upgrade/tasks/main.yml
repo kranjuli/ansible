@@ -1,0 +1,61 @@
+---
+- name: Info of OS system
+  ansible.builtin.debug:
+    msg: "OS: {{ ansible_distribution }} - {{ ansible_facts['lsb']['release'] }}"
+
+- name: Package versions are pinned
+  ansible.builtin.template:
+    src: "apt_preferences.j2"
+    dest: "/etc/apt/preferences"
+    owner: "root"
+    group: "root"
+    mode: "u=rw,g=r,o=r"
+  when: upgrade_packages_pinned_packages is defined
+
+- name: System is upgraded
+  block:
+    - name: Cache is updated and packages are upgraded
+      ansible.builtin.apt:
+        autoclean: true
+        dpkg_options: 'force-confold,force-confdef'
+        upgrade: true
+        update_cache: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+        NEEDRESTART_MODE: a
+      # apt might be blocked by another installation (e.g. unattended upgrades) so we need some retries
+      register: _results
+      until: _results is not failed
+      retries: 2
+      delay: 90
+
+    - name: Check if a reboot is required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+        get_checksum: false
+      register: _reboot_required_file
+
+    - name: The host is rebooted
+      ansible.builtin.reboot:
+      when: _reboot_required_file.stat.exists
+
+    - name: No longer required dependencies are removed
+      ansible.builtin.apt:
+        autoremove: true
+        clean: true
+      # apt might be blocked by another installation (e.g. unattended upgrades) so we want lots of retries
+      register: _results
+      until: _results is not failed
+      retries: 2
+      delay: 30
+
+    - name: Delete apt cache
+      ansible.builtin.file:
+        path: /var/cache/apt/archives
+        state: absent
+      when: upgrade_packages_clean_cache
+
+  rescue:
+    - name: Upgrade system failed
+      ansible.builtin.fail:
+        msg: "failed during upgrading packages"

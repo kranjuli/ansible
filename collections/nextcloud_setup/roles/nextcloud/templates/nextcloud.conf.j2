@@ -1,0 +1,8 @@
+<VirtualHost *:80>
+    DocumentRoot {{ nextcloud_dir }}
+    <Directory {{ nextcloud_dir }}>
+        Require all granted
+        AllowOverride All
+        Options FollowSymLinks MultiViews
+    </Directory>
+</VirtualHost>

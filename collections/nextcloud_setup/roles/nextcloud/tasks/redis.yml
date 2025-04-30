@@ -1,0 +1,45 @@
+---
+- name: Redis server is installed
+  ansible.builtin.apt:
+    name:
+      - redis-server
+      - php-redis
+    state: present
+  # apt might be blocked by another installation (e.g. unattended upgrades)
+  register: _results
+  until: _results is not failed
+  retries: 2
+  delay: 60
+
+- name: Configure Redis to use UNIX socket only
+  ansible.builtin.lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^#?unixsocket '
+    line: 'unixsocket /var/run/redis/redis.sock'
+  notify: Restart Redis
+
+- name: Set Redis socket permissions
+  ansible.builtin.lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^#?unixsocketperm '
+    line: 'unixsocketperm 770'
+  notify: Restart Redis
+
+- name: Add www-data to redis group
+  ansible.builtin.user:
+    name: www-data
+    groups: redis
+    append: yes
+
+- name: Configure Nextcloud to use Redis for caching
+  blockinfile:
+    path: "{{ nextcloud_dir }}/config/config.php"
+    marker: "# {mark} ANSIBLE MANAGED REDIS CONFIG"
+    insertafter: ");"
+    block: |
+      'memcache.local' => '\\OC\\Memcache\\Redis',
+      'memcache.locking' => '\\OC\\Memcache\\Redis',
+      'redis' => [
+          'host' => '/var/run/redis/redis.sock',
+          'port' => 0,
+      ],

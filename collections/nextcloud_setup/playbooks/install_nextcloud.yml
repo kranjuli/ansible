@@ -1,0 +1,18 @@
+---
+- name: Install Nextcloud on Raspberry Pi
+  hosts: nextcloud_host
+  become: true
+  vars:
+    init_setup: false
+
+  pre_tasks:
+    - name: Run debian os upgrade tasks
+      ansible.builtin.include_role:
+        name: kranjuli.nextcloud_setup.debian_os_upgrade
+    - name: Install nextcloud database
+      ansible.builtin.include_role:
+        name: kranjuli.nextcloud_setup.database
+      when: init_setup | bool
+
+  roles:
+    - kranjuli.nextcloud

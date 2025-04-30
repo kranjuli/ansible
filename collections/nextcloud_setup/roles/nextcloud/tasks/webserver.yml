@@ -1,0 +1,44 @@
+---
+- name: Apache2 and php are installed
+  ansible.builtin.apt:
+    name:
+      - apache2
+      - libapache2-mod-php
+      - php
+      - php-mysql
+      - php-gd
+      - php-json
+      - php-xml
+      - php-mbstring
+      - php-curl
+      - php-zip
+      - php-bz2
+      - php-intl
+      - php-bcmath
+    update_cache: true
+    state: present
+  # apt might be blocked by another installation (e.g. unattended upgrades)
+  register: _results
+  until: _results is not failed
+  retries: 2
+  delay: 60
+
+- name: Apache2 config for Nextcloud is created
+  ansible.builtin.template:
+    src: "nextcloud.conf.j2"
+    dest: "/etc/apache2/sites-available/nextcloud.conf"
+    owner: "root"
+    group: "root"
+    mode: "644"
+  notify: Reload Apache
+
+- name: Nextcloud site and Apache modules are enabled
+  shell: |
+    a2ensite nextcloud.conf
+    a2enmod rewrite
+  notify: Reload Apache
+
+- name: Apache2 is restarted
+  ansible.builtin.service:
+    name: apache2
+    state: restarted

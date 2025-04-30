@@ -85,7 +85,7 @@ ansible-galaxy role init roles/<role_name>
 #        |       ├── tests/
 #        |       ├── vars/
 #        |       └── README.md
-#        |       └── README.md
+#        ├── README.md
 #        └── galaxy.yml
 
 # open file <namespace>/<collection_name>/roles/role_name/tasks/main.yml in the collection

@@ -1,0 +1,3 @@
+---
+reboot_after_upgrade: true
+upgrade_packages_clean_cache: false
