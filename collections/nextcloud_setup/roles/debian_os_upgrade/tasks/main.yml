@@ -1,7 +1,6 @@
 ---
 - name: Info of OS system
-  ansible.builtin.debug:
-    msg: "OS: {{ ansible_distribution }} - {{ ansible_facts['lsb']['release'] }}"
+  ansible.builtin.include_tasks: system_information.yml
 
 - name: Package versions are pinned
   ansible.builtin.template:

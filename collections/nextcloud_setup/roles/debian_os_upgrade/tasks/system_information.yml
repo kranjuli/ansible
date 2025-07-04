@@ -1,0 +1,29 @@
+---
+- name: Info of OS system
+  ansible.builtin.debug:
+    msg: "OS: {{ ansible_distribution }} - {{ ansible_facts['lsb']['release'] }}"
+
+- name: Motd and issue files are empty
+  ansible.builtin.copy:
+    content: ""
+    dest: "{{ item }}"
+    force: false
+    mode: '0644'
+  loop:
+    - "/etc/motd"
+    - "/etc/issue"
+    - "/etc/issue.net"
+
+- name: Get datetime from ansible controller host
+  ansible.builtin.setup:
+    gather_subset:
+      - "date_time"
+  delegate_to: localhost
+  become: false
+  delegate_facts: true
+
+- name: Copy motd script
+  ansible.builtin.template:
+    dest: /etc/profile.d/motd_script.sh
+    src: templates/motd_script.j2
+    mode: '0644'

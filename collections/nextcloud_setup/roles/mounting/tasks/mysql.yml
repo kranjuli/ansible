@@ -1,0 +1,27 @@
+---
+- name: Mysql is stopped
+  ansible.builtin.service:
+    name: mysql
+    state: stopped
+
+- name: Remove default nextcloud database directory
+  ansible.builtin.file:
+    path: "/var/lib/mysql"
+    state: absent
+
+- name: Create symbolic link to "{{ mount_point }}/mysql"
+  ansible.builtin.file:
+    src: "{{ mount_point }}/mysql"
+    dst: "/var/lib/mysql"
+    owner: mysql
+    group: mysql
+    state: link
+  notify: Start mysql
+
+- name: Recursively change ownership of "{{ mount_point }}/mysql"
+  ansible.builtin.file:
+    path: "{{ mount_point }}/mysql"
+    state: directory
+    recurse: yes
+    owner: mysql
+    group: mysql

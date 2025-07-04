@@ -30,15 +30,27 @@
     owner: "root"
     group: "root"
     mode: "644"
-  notify: Reload Apache
+  notify: Reload Apache2
 
-- name: Nextcloud site and Apache modules are enabled
-  shell: |
-    a2ensite nextcloud.conf
-    a2enmod rewrite
-  notify: Reload Apache
+- name: Disable default Apache2 site
+  ansible.builtin.command: a2dissite 000-default.conf
+  args:
+    removes: /etc/apache2/sites-enabled/000-default.conf
+  notify: Reload Apache2
 
-- name: Apache2 is restarted
-  ansible.builtin.service:
-    name: apache2
-    state: restarted
+- name: Enable Nextcloud site
+  ansible.builtin.command: a2ensite nextcloud.conf
+  args:
+    creates: /etc/apache2/sites-enabled/nextcloud.conf
+  notify: Reload Apache2
+
+- name: Enable Apache2 modules (rewrite, headers, env, dir)
+  ansible.builtin.command: a2enmod {{ item }}
+  args:
+    creates: "/etc/apache2/mod-enabled/{{ item }}.load"
+  loop:
+    - rewrite
+    - headers
+    - env
+    - dir
+  notify: Restart Apache2

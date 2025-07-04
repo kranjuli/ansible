@@ -25,21 +25,15 @@
     line: 'unixsocketperm 770'
   notify: Restart Redis
 
+- name: Set Redis port to 0
+  ansible.builtin.lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^#?port '
+    line: 'port 0'
+  notify: Restart Redis
+
 - name: Add www-data to redis group
   ansible.builtin.user:
     name: www-data
     groups: redis
     append: yes
-
-- name: Configure Nextcloud to use Redis for caching
-  blockinfile:
-    path: "{{ nextcloud_dir }}/config/config.php"
-    marker: "# {mark} ANSIBLE MANAGED REDIS CONFIG"
-    insertafter: ");"
-    block: |
-      'memcache.local' => '\\OC\\Memcache\\Redis',
-      'memcache.locking' => '\\OC\\Memcache\\Redis',
-      'redis' => [
-          'host' => '/var/run/redis/redis.sock',
-          'port' => 0,
-      ],

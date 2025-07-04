@@ -1,0 +1,4 @@
+---
+mount_database: false
+mount_point: "/mnt/ssd"
+external_hard_drive_name: "/dev/sda1"

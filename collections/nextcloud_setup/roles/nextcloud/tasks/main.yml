@@ -1,29 +1,7 @@
 ---
-- name: Nextcloud is downloaded
-  ansible.builtin.get_url:
-    url: "https://download.nextcloud.com/server/releases/nextcloud-{{ nextcloud_version }}.zip"
-    dest: "/tmp/nextcloud.zip"
-
-- name: Ensure target diretory "{{ nextcloud_dir }}" exists
-  ansible.builtin.file:
-    path: "{{ nextcloud_dir }}"
-    state: directory
-    owner: www-data
-    group: www-data
-    mode: '0755'
-
-- name: Nextcloud is extracted
-  ansible.builtin.unarchive:
-    src: "/tmp/nextcloud.zip"
-    dest: "{{ nextcloud_dir }}"
-    remote_src: yes
-
-- name: Set permissions for Nextcloud directory
-  file:
-    path: "{{ nextcloud_dir }}"
-    owner: www-data
-    group: www-data
-    recurse: yes
+- name: Install nextcloud
+  ansible.builtin.include_tasks: nextcloud.yml
+  when: install_nextcloud | bool
 
 - name: Setup web server
   ansible.builtin.include_tasks: webserver.yml
@@ -32,3 +10,19 @@
 - name: Setup redis
   ansible.builtin.include_tasks: redis.yml
   when: init_setup | bool
+
+- name: Setup database
+  ansible.builtin.include_tasks: database.yml
+  when: init_setup | bool
+
+- name: Create default nextcloud config file
+  ansible.builtin.template:
+    src: "nextcloud_default_config.php.j2"
+    dest: "/var/www/nextcloud/config.php"
+    owner: "www-data"
+    group: "www-data"
+    mode: "0640"
+  notify: Restart Apache
+  when: 
+    - init_setup | bool
+    - create_nextcloud_default_config | bool

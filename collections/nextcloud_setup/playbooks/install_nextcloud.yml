@@ -1,18 +1,38 @@
 ---
 - name: Install Nextcloud on Raspberry Pi
-  hosts: nextcloud_host
+  hosts: 192.168.2.204
   become: true
   vars:
-    init_setup: false
+    # set true if initial setup of nextcloud
+    init_setup: true
+    # create mounting with the external hard drive if nextcloud config file/database already on the external hard drive
+    mounting: false
+    # run debian os upgrade
+    os_upgrade: true
+    # install nextcloud
+    install_nextcloud: true
+    # set nextcloud version to install. Default version is defined in role nextcloud/defaults/main.yml
+    # nextcloud_version: ""
+    # create nextcloud database only if database/database mounting does not exist
+    # create_nextcloud_database: true
 
   pre_tasks:
+
     - name: Run debian os upgrade tasks
       ansible.builtin.include_role:
         name: kranjuli.nextcloud_setup.debian_os_upgrade
-    - name: Install nextcloud database
-      ansible.builtin.include_role:
-        name: kranjuli.nextcloud_setup.database
-      when: init_setup | bool
+      when: os_upgrade | bool
 
   roles:
-    - kranjuli.nextcloud
+    - role: kranjuli.nextcloud_setup.nextcloud
+      # donot create nextcloud config file by default
+      create_nextcloud_default_config: true
+
+  post_tasks:
+    - name: Mount nextcloud directories
+      ansible.builtin.include_role:
+        name: kranjuli.nextcloud_setup.mounting
+      vars:
+        # mount_database: false
+        mount_point: "/mnt/ssd"
+      when: mounting | bool

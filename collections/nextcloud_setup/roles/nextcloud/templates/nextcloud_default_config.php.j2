@@ -1,0 +1,36 @@
+<?php
+$CONFIG = array (
+  'trusted_domains' =>
+  array (
+    0 => "{{ nextcloud_host }}",
+  ),
+  'datadirectory' => "{{ nextcloud_dir }}",
+  'dbtype' => 'mysql',
+  'version' => "{{ nextcloud_version }}",
+  'overwrite.cli.url' => "http://{{ nextcloud_host }}",
+  'dbname' => "{{ database_name }}",
+  'dbhost' => "{{ database_host }}",
+  'dbport' => '',
+  'dbtableprefix' => 'oc_',
+  'mysql.utf8mb4' => true,
+  'dbuser' => "{{ database_user }}",
+  'dbpassword' => "{{ database_password }}",
+  'memcache.locking' => '\\OC\\Memcache\\Redis',
+  'memcache.local' => '\\OC\\Memcache\\Redis',
+  'redis' =>
+  array (
+     'host' => '/var/run/redis/redis.sock',
+     'port' => 0,
+  ),
+  'loglevel' => 2,
+  'log_rotate_size' => 104857600,
+  'maintenance' => false,
+  'enable_previews' => false,
+  'enabledPreviewProviders' =>
+  array (
+    'OC\Preview\PNG',
+    'OC\Preview\JPEG',
+    'OC\Preview\JPG',
+    'OC\Preview\GIF',
+  ),
+);
