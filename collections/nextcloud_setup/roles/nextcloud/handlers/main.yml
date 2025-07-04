@@ -5,7 +5,12 @@
     name: redis-server
     state: restarted
 
-- name: Reload Apache
+- name: Reload Apache2
   ansible.builtin.service:
     name: apache2
     state: reloaded
+
+- name: Restart Apache2
+  ansible.builtin.service:
+    name: apache2
+    state: restarted

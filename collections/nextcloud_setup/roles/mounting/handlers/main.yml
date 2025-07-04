@@ -1,0 +1,11 @@
+---
+# handlers file for roles/mounting
+- name: Restart Apache
+  ansible.builtin.service:
+    name: apache2
+    state: restarted
+
+- name: Start mysql
+  ansible.builtin.service:
+    name: mysql
+    state: started

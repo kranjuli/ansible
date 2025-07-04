@@ -1,0 +1,31 @@
+---
+# tasks file for roles/mounting
+- name: Mount directory {{ mount_point }} created
+  ansible.builtin.file:
+    path: "{{ mount_point }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: UUID of external hard drive is determined
+  ansible.builtin.command: blkid {{ external_hard_drive_name }} -o value -s UUID
+  register: _hard_drive_uuid
+  changed_when: false
+
+- name: Mount the external hard drive {{ external_hard_drive_name }}
+  ansible.posix.mount:
+    path: "{{ mount_point }}"
+    src: "UUID={{ _hard_drive_uuid.stdout }}"
+    fstype: ext4
+    opts: defaults
+    state: mounted
+
+- name: Mount nextcloud config files
+  ansible.builtin.include_tasks: nextcloud.yml
+
+- name: Mount mysql database
+  ansible.builtin.include_tasks: mysql.yml
+  when:
+    - mount_database is defined
+    - mount_database | bool

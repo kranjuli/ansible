@@ -1,0 +1,36 @@
+---
+- name: Nextcloud is downloaded
+  ansible.builtin.get_url:
+    url: "https://download.nextcloud.com/server/releases/nextcloud-{{ nextcloud_version }}.zip"
+    dest: "/tmp/nextcloud-{{ nextcloud_version }}.zip"
+
+- name: Delete directory "{{ nextcloud_dir }}"
+  ansible.builtin.file:
+    path: "{{ nextcloud_dir }}"
+    state: absent
+
+- name: Recreate directory "{{ nextcloud_dir }}"
+  ansible.builtin.file:
+    path: "{{ nextcloud_dir }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Nextcloud is extracted
+  ansible.builtin.unarchive:
+    src: "/tmp/nextcloud-{{ nextcloud_version }}.zip"
+    dest: "{{ nextcloud_dir }}"
+    remote_src: yes
+
+- name: Cleanup "{{ nextcloud_dir }}"
+  ansible.builtin.shell: |
+    mv {{ nextcloud_dir }}/nextcloud/* {{ nextcloud_dir }}
+    rm -rf {{ nextcloud_dir }}/nextcloud
+
+- name: Set permissions for nextcloud directory
+  file:
+    path: "{{ nextcloud_dir }}"
+    owner: www-data
+    group: www-data
+    recurse: yes

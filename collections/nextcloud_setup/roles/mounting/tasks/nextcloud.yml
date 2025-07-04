@@ -1,0 +1,28 @@
+---
+- name: Remove default nextcloud's config directory 
+  ansible.builtin.file:
+    path: "{{ mount_point }}/nextcloud/config"
+    state: absent
+
+- name: Create symbolic link to "{{ mount_point }}/nextcloud/config"
+  ansible.builtin.file:
+    src: "{{ mount_point }}/nextcloud/config"
+    path: "{{ nextcloud_dir }}/config"
+    owner: www-data
+    group: www-data
+    state: link
+  notify: Restart Apache
+
+- name: Remove default nextcloud's data directory 
+  ansible.builtin.file:
+    path: "{{ mount_point }}/nextcloud/data"
+    state: absent
+
+- name: Create symbolic link to "{{ mount_point }}/nextcloud/config"
+  ansible.builtin.file:
+    src: "{{ mount_point }}/nextcloud/config"
+    path: "{{ nextcloud_dir }}/config"
+    owner: www-data
+    group: www-data
+    state: link
+  notify: Restart Apache

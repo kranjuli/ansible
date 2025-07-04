@@ -1,0 +1,14 @@
+#!/bin/bash
+echo "########################################################"
+echo "--------------------------------------------------------"
+echo "Free capacity of SD-card:"
+echo ""
+df -h /
+echo "--------------------------------------------------------"
+echo "Network status:"
+echo ""
+ip -4 --brief address show | grep -vE "^lo" | column -t | sort -V
+echo "--------------------------------------------------------"
+echo ""
+echo "last update {{ hostvars.localhost.ansible_date_time.iso8601 }} ({{ hostvars.localhost.ansible_date_time.tz }})"
+echo "########################################################"
