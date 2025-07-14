@@ -1,0 +1,17 @@
+#!/bin/bash
+echo "########################################################"
+{% include 'motd_script_header_' + status_information_type + '.j2' %}
+echo "--------------------------------------------------------"
+echo "Free capacity of SD-card:"
+echo ""
+df -h /
+echo "--------------------------------------------------------"
+echo "Network status:"
+echo ""
+ip -4 --brief address show | grep -vE "^lo" | column -t | sort -V
+echo "--------------------------------------------------------"
+echo "Version Information:"
+echo "{{ _collection_version.msg }}"
+echo ""
+echo "Last Update: {{ hostvars.localhost.ansible_date_time.iso8601 }} ({{ hostvars.localhost.ansible_date_time.tz }})"
+echo "########################################################"
