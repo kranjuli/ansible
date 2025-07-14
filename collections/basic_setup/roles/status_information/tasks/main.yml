@@ -1,0 +1,31 @@
+---
+- name: Check version of kranjuli.basic_setup collection
+  ansible.builtin.debug:
+    msg: |
+      kranjuli.basic_setup version {{ lookup('community.general.collection_version', 'kranjuli.basic_setup') }}
+  register: _collection_version
+
+- name: Motd and issue files are empty
+  ansible.builtin.copy:
+    content: ""
+    dest: "{{ item }}"
+    force: false
+    mode: '0644'
+  loop:
+    - "/etc/motd"
+    - "/etc/issue"
+    - "/etc/issue.net"
+
+- name: Get datetime from ansible controller host
+  ansible.builtin.setup:
+    gather_subset:
+      - "date_time"
+  delegate_to: localhost
+  become: false
+  delegate_facts: true
+
+- name: Copy motd script
+  ansible.builtin.template:
+    dest: /etc/profile.d/motd_script.sh
+    src: motd_script_base_template.j2
+    mode: '0644'
