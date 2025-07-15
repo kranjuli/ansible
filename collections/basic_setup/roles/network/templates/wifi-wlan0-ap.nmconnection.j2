@@ -1,0 +1,25 @@
+{{ ansible_managed | comment}}
+
+[connection]
+id={{ item.type }}-{{ item.interface_name }}
+uuid={{ item.uuid }}
+type={{ item.type }}
+interface-name={{ item.interface_name }}
+
+[wifi]
+band=bg
+mode=ap
+ssid={{ item.ssid }}
+
+[wifi-security]
+key-mgmt=wpa-psk
+psk={{ network_wifi_ap_password }}
+
+[ipv4]
+method=shared
+
+[ipv6]
+addr-gen-mode=default
+method=auto
+
+[proxy]

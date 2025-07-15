@@ -1,0 +1,25 @@
+---
+#
+# network configuration
+#
+
+# network devices
+network_wan_device: "wlan0"
+
+# Devices which should NOT be managed by NetworkManager
+network_nm_unmanaged_devices:
+  - p2p-dev-wlan0
+
+# Networkmanager config for wlan
+network_wlan_config:
+  - interface_name: "{{ network_wan_device }}"
+    type: "wifi"
+    uuid: "ad344760-f3b2-407b-9c6a-d0b7a5a90a7c"
+    ssid: "Archer_TH3"
+
+# Networkmanager config for wlan access point
+network_wlan_access_point_config:
+  - interface_name: "{{ network_wan_device }}"
+    type: "wifi"
+    uuid: "ad344760-f3b2-407b-9c6a-d0b7a5a90a7c"
+    ssid: "GFS3_AP"

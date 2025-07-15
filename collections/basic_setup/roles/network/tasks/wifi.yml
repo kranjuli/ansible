@@ -1,0 +1,25 @@
+---
+- name: Check for required variables
+  ansible.builtin.assert:
+    that:
+      - network_wifi_password is defined
+    fail_msg: "some required variables are undefined"
+
+- name: Set Wifi country code
+  ansible.builtin.command:
+    cmd: raspi-config nonint do_wifi_country DE
+  changed_when: true
+
+- name: Wifi is unblocked
+  ansible.builtin.command:
+    cmd: rfkill unblock wifi
+  changed_when: true
+
+# Use template instead of nmcli ansible module because 802-1x functionality is not supported there
+- name: Wifi connection is configured
+  ansible.builtin.template:
+    dest: "/etc/NetworkManager/system-connections/wifi-wlan0.nmconnection"
+    src: wifi-wlan0.nmconnection.j2
+    mode: '0600'
+  loop: "{{ network_wlan_config }}"
+  notify: "network : Reboot system"
