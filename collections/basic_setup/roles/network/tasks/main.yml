@@ -1,0 +1,38 @@
+---
+- name: NetworkManager is started & enabled
+  ansible.builtin.service:
+    name: NetworkManager
+    state: started
+    enabled: true
+
+- name: The wpa_supplicant service is disabled and stopped
+  ansible.builtin.service:
+    name: wpa_supplicant
+    state: stopped
+    enabled: false
+
+- name: Set up wifi connection
+  ansible.builtin.include_tasks: "wifi.yml"
+  when: network_wifi_setup | bool
+
+- name: Set up wifi access point connection
+  ansible.builtin.include_tasks: "wifi_ap.yml"
+  when: network_wifi_ap_setup | bool
+
+- name: Ensure NetworkManager config directory exists
+  ansible.builtin.file:
+    path: /etc/NetworkManager/conf.d
+    state: directory
+    mode: '0755'
+
+- name: Configure unmanaged devices in NetworkManager
+  ansible.builtin.template:
+    src: nm-unmanaged-devices.conf.j2
+    dest: /etc/NetworkManager/conf.d/10-unmanaged-devices.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: "network : Reboot system"
+
+- name: Run any handlers now to ensure that we use NetworkManager and have wlan
+  ansible.builtin.meta: flush_handlers

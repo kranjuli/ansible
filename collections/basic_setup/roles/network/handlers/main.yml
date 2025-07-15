@@ -1,0 +1,13 @@
+---
+- name: Restart dnsmasq
+  ansible.builtin.service:
+    name: dnsmasq
+    state: restarted
+
+- name: Restart nftables
+  ansible.builtin.service:
+    name: nftables
+    state: restarted
+
+- name: Reboot system
+  ansible.builtin.reboot:

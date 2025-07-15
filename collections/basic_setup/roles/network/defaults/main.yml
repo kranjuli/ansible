@@ -1,0 +1,9 @@
+---
+#
+# network configuration
+#
+
+# setup wifi connection
+network_wifi_setup: 0
+# setup wifi access point connection
+network_wifi_ap_setup: 0

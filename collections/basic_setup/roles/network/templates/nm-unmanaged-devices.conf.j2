@@ -1,0 +1,2 @@
+[keyfile]
+unmanaged-devices={{ network_nm_unmanaged_devices | map('regex_replace', '^', 'interface-name:') | join(';') }}

@@ -1,0 +1,8 @@
+---
+collections:
+  # the collection needs to install itself if the playbooks use roles from the collection
+  - name: kranjuli.basic_setup
+    source: "."
+    type: subdirs
+  # dependencies from galaxy.yml
+  # - name: community.general

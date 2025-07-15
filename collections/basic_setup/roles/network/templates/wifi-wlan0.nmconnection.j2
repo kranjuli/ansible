@@ -1,0 +1,28 @@
+{{ ansible_managed | comment}}
+
+[connection]
+id={{ item.type }}-{{ item.interface_name }}
+uuid={{ item.uuid }}
+type={{ item.type }}
+interface-name={{ item.interface_name }}
+autoconnect=true
+autoconnect-retries=0
+auth-retries=0
+
+[wifi]
+mac-address-blacklist=
+mode=infrastructure
+ssid={{ item.ssid }}
+
+[wifi-security]
+key-mgmt=wpa-psk
+password={{ network_wifi_password }}
+
+[ipv4]
+method=auto
+
+[ipv6]
+addr-gen-mode=stable-privacy
+method=auto
+
+[proxy]
