@@ -60,7 +60,7 @@ jobs:
 
       - name: Create release with all collections
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             **/*.tar.gz
