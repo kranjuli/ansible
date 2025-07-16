@@ -1,0 +1,71 @@
+name: Build and Release Ansible Collections
+
+on:
+  push:
+    branches: [ "feat/add-dependabot-yml" ]
+    tags: [ "*" ]
+  # pull_request:
+  #  branches: [ "main" ]
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name:  🏗 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: 🏗 Install ansible and dependencies
+        run: |
+          pip install ansible
+
+      - name: 🏗 Build Ansible Collections
+        run: |
+          find . -type f -name galaxy.yml | while read galaxy; do
+            dir=$(dirname "$galaxy")
+            echo "Building collection in $dir"
+            cd "$dir"
+            ansible-galaxy collection build
+            cd - > /dev/null
+          done
+
+      - name: List all files (debug)
+        run: ls -R
+
+      - name: Collect all collection tarballs
+        run: |
+          find . -name "*.tar.gz" > artifacts.txt
+
+      - name: Show artifacts.txt (debug)
+        run: cat artifacts.txt || echo "artifacts.txt not found or empty"
+
+      #- uses: actions/upload-artifact@v4
+      #  with:
+      #    name: built-tarballs
+      #    path: '**/*.tar.gz'
+
+      - name: Upload each collection tarball as its own artifact
+        run: |
+          for tarball in $(find . -name "*.tar.gz"); do
+            artifact_name=$(basename "$tarball" .tar.gz)
+            echo "Uploading $tarball as $artifact_name"
+            gh workflow run upload-artifact \
+              --name "$artifact_name" \
+              --path "$tarball"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release with all collections
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            **/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
