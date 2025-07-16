@@ -1,0 +1,58 @@
+name: Build Ansible Collection artifact
+
+on:
+  push:
+    branches:
+      - 'test/collection-*'
+
+jobs:
+  build-artifact:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: 🏗 Install ansible and dependencies
+        run: |
+          pip install ansible
+
+      - name: 🏗 Determine collection dir from branch name
+        id: parse
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"  # e.g. test/collection-basic_setup
+          COLLECTION_NAME="${BRANCH_NAME#test/collection-}"
+          COLLECTION_DIR="collections/${COLLECTION_NAME}"
+          echo "COLLECTION_NAME=$COLLECTION_NAME" >> $GITHUB_ENV
+          echo "COLLECTION_DIR=$COLLECTION_DIR" >> $GITHUB_ENV
+
+      - name: 🏗 Build Ansible Collections
+        working-directory: ${{ env.COLLECTION_DIR }}
+        run: |
+            ansible-galaxy collection build
+
+      - name: 🏗 Get built ansible collection (*.tar.gz)
+        id: artifact
+        run: |
+          FILE=$(find ${{ env.COLLECTION_DIR }} -maxdepth 1 -name '*.tar.gz' | head -n 1)
+          if [[ -z "$FILE" ]]; then
+            echo "❌ No .tar.gz file found in ${{ env.COLLECTION_DIR }}"
+            exit 1
+          fi
+          echo "✅ Found artifact: $FILE"
+          echo "path=$FILE" >> "$GITHUB_OUTPUT"
+
+      - name: 🧪 Debug output
+        run: |
+          echo "Using path: ${{ steps.artifact.outputs.path }}"
+
+      - name: 🚀 Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ansible-${{ env.COLLECTION_NAME }}
+          path: ${{ steps.artifact.outputs.path }}

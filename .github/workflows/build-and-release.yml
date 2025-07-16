@@ -2,10 +2,7 @@ name: Build and Release Ansible Collections
 
 on:
   push:
-    branches: [ "feat/add-dependabot-yml" ]
-    tags: [ "*" ]
-  # pull_request:
-  #  branches: [ "main" ]
+    tags: [ "collection-*-v*" ]
 
 jobs:
   build-and-release:
@@ -24,48 +21,42 @@ jobs:
         run: |
           pip install ansible
 
-      - name: 🏗 Build Ansible Collections
-        run: |
-          find . -type f -name galaxy.yml | while read galaxy; do
-            dir=$(dirname "$galaxy")
-            echo "Building collection in $dir"
-            cd "$dir"
-            ansible-galaxy collection build
-            cd - > /dev/null
-          done
-
-      - name: List all files (debug)
-        run: ls -R
-
-      - name: Collect all collection tarballs
-        run: |
-          find . -name "*.tar.gz" > artifacts.txt
-
-      - name: Show artifacts.txt (debug)
-        run: cat artifacts.txt || echo "artifacts.txt not found or empty"
-
-      #- uses: actions/upload-artifact@v4
-      #  with:
-      #    name: built-tarballs
-      #    path: '**/*.tar.gz'
-
-      - name: Upload each collection tarball as its own artifact
-        run: |
-          for tarball in $(find . -name "*.tar.gz"); do
-            artifact_name=$(basename "$tarball" .tar.gz)
-            echo "Uploading $tarball as $artifact_name"
-            gh workflow run upload-artifact \
-              --name "$artifact_name" \
-              --path "$tarball"
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create release with all collections
+      - name: 🏗 Parse tag for ansible collection
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
+        id: vars
+        run: |
+          TAG_NAME="${GITHUB_REF##*/}"
+          # i.e: collection-basic_setup-v1.2.3 -> collection=basic_setup, version=v1.2.3
+          COLLECTION=$(echo "$TAG_NAME" | cut -d'-' -f2- | rev | cut -d'-' -f2- | rev)
+          VERSION=$(echo "$TAG_NAME" | grep -oP 'v\d+\.\d+\.\d+')
+          echo "COLLECTION_DIR=$DIR_NAME" >> $GITHUB_ENV
+          echo "COLLECTION_NAME=$COLLECTION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: 🏗 Build Ansible Collections
+        working-directory: ${{ env.COLLECTION_DIR }}
+        run: |
+            ansible-galaxy collection build
+
+      # - name: List all files (debug)
+      #  run: ls -R
+
+      # - name: Collect all collection tarballs
+      #  run: |
+      #    find . -name "*.tar.gz" > artifacts.txt
+
+      - name: Get built ansible collection (*.tar.gz)
+        id: artifact
+        run: |
+          FILE=$(ls ${{ env.COLLECTION_DIR }}/*.tar.gz)
+          echo "file=$FILE" >> $GITHUB_OUTPUT
+
+      - name: Upload release asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
         with:
-          files: |
-            **/*.tar.gz
+          name: Release ${{ env.COLLECTION_NAME }} ${{ env.VERSION }}
+          tag_name: ${{ github.ref_name }}
+          files: ${{ steps.artifact.outputs.file }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
