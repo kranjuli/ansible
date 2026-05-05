@@ -1,0 +1,4 @@
+---
+ansible_user: pi
+docker_log_max_size: "10m"
+docker_log_max_files: "3"
