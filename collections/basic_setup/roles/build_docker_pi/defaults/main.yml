@@ -1,0 +1,8 @@
+---
+images_dir: "/home/kranjuli/crypto-apps"
+docker_images:
+  - name: crypto-tracker
+    tag: latest
+  - name: trade-vista
+    tag: latest
+app_dir: "crypto-infra-deploy"

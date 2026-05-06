@@ -63,11 +63,12 @@
   notify: Restart Docker service
 
 
-- name: Add {{ ansible_user }} to docker group
+- name: Docker group - add user to it
   ansible.builtin.user:
-    name: "{{ ansible_user }}"
+    name: "{{ item }}"
     groups: docker
     append: true
+  loop: "{{ sudo_users }}"
 
 - name: Ensure Docker service is running and enabled
   ansible.builtin.service:

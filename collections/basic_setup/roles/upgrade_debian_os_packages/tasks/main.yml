@@ -23,7 +23,7 @@
       environment:
         DEBIAN_FRONTEND: noninteractive
         NEEDRESTART_MODE: a
-      async: 600
+      async: 3600
       poll: 0
       register: _os_upgrade_job
 
@@ -32,8 +32,8 @@
         jid: "{{ _os_upgrade_job.ansible_job_id }}"
       register: _os_upgrade_status
       until: _os_upgrade_status.finished
-      retries: 2
-      delay: 30
+      retries: 30
+      delay: 120
 
     - name: Check if a reboot is required
       ansible.builtin.stat:
