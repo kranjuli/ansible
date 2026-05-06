@@ -7,8 +7,7 @@
     upgrade_packages_clean_cache: true
     sudo_user: "kranjuli"
     sudo_user_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIO7CPfNf9BZJ+PUbsCCbTDD1UcEVwehs5RndBTJ43+U kranjuli@kranjuli-pi"
-    docker_log_max_size: "10m"
-    docker_log_max_files: "3"
+
   tasks:
     - name: OS information
       ansible.builtin.debug:
@@ -61,11 +60,87 @@
       retries: 2
       delay: 30
 
+    - name: Install and configure unattended-upgrades
+      ansible.builtin.apt:
+        name: 
+          - unattended-upgrades
+          - apt-listchanges
+        state: present
+        update_cache: true
+  
+    - name: Configure unattended-upgrades to allow automatic reboot
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/50unattended-upgrades
+        content: |
+          Unattended-Upgrade::Allowed-Origins {
+            "${distro_id}:${distro_codename}-security";
+            "${distro_id}:${distro_codename}-updates";
+            "${distro_id}:${distro_codename}-proposed";
+            "${distro_id}:${distro_codename}-backports";
+          };
+          Unattended-Upgrade::Automatic-Reboot "true";
+          Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+
+    - name: Ensure unattended-upgrades service is enabled and started
+      ansible.builtin.systemd:
+        name: unattended-upgrades
+        state: started
+        enabled: true
+
+    - name: Ensure apt-daily-upgrade.timer is enabled
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - apt-daily-upgrade.timer
+        - apt-daily.timer
+
+    - name: Remove default MOTD files
+      ansible.builtin.file:
+        path: /etc/motd
+        state: absent
+      loop:
+        - /etc/motd
+        - /etc/update-motd.d/10-help-text
+
+    - name: Install figlet to display system information on login
+      ansible.builtin.apt:
+        name: figlet
+        state: present
+        update_cache: true
+
     - name: Delete apt cache
       ansible.builtin.file:
         path: /var/cache/apt/archives
         state: absent
       when: upgrade_packages_clean_cache
+
+    - name: Create FIGlET banner script
+      ansible.builtin.copy:
+        dest: /etc/update-motd.d/01-banner
+        mode: '0755'
+        content: |
+          #!/bin/bash
+          echo -e "\e[32m"
+          figlet -c "Welcome to {{ ansible_hostname }}"
+          echo -e "\e[0m"
+  
+    - name: Create custom MOTD file
+      ansible.builtin.copy:
+        dest: /etc/update-motd.d/99-custom-pi-info
+        mode: '0755'
+        content: |
+          #!/bin/bash
+          echo '-----------------------------------------------------------------------------'
+          echo "SYSTEM INFORMATION - $(date)"
+          echo "OS:         {{ ansible_distribution }} - {{ ansible_facts['lsb']['release'] }}"
+          echo "Kernel:     {{ ansible_kernel }}"
+          echo "CPU Temp:   $(cat /sys/class/thermal/thermal_zone0/temp | awk '{print $1/1000}')"
+          echo "Uptime:     $(uptime -p)"
+          echo "Hostname:   $(hostname)"
+          echo "IP Address: $(hostname -I | awk '{print $1}')"
+          echo '-----------------------------------------------------------------------------'
 
     - name: Add sudo user on host
       ansible.builtin.user:
@@ -81,75 +156,7 @@
         state: present
         key: "{{ sudo_user_ssh_public_key }}"
 
-    - name: Install prerequisites for Docker
-      ansible.builtin.apt:
-        name: 
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - gnupg
-          - lsb-release
-        state: present
-
-    - name: Create Docker GPG keyring directory
+    - name: Ensure MOTD is not suppressed by hushlogin
       ansible.builtin.file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: '0755'
-
-    - name: Add Docker's official GPG key
-      ansible.builtin.get_url:
-        url: https://download.docker.com/linux/debian/gpg
-        dest: /etc/apt/keyrings/docker.gpg
-        mode: '0644'
-
-    - name: Add Docker repository
-      ansible.builtin.apt_repository: 
-        repo: "deb [arch={{ 'arm64' if ansible_architecture == 'aarch64' else 'armhf' }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
-        state: present
-        filename: docker
-    - name: Update apt cache after adding Docker repository
-      ansible.builtin.apt:
-        update_cache: true
-        cache_valid_time: 3600
-
-    - name: Install Docker
-      ansible.builtin.apt:
-        name: 
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-compose-plugin
-        state: present
-        update_cache: true
-
-    - name: Docker log rotation configuration
-      ansible.builtin.copy:
-        dest: /etc/docker/daemon.json
-        content: |
-          {
-            "log-driver": "json-file",
-            "log-opts": {
-              "max-size": "{{ docker_log_max_size }}",
-              "max-file": "{{ docker_log_max_files }}"
-            }
-          }
-      notify: Restart Docker service
-
-    - name: Docker group - add sudo user to it
-      ansible.builtin.user:
-        name: "{{ sudo_user }}"
-        groups: docker
-        append: true
-
-    - name: Enable and start Docker service
-      ansible.builtin.service:
-        name: docker
-        state: started
-        enabled: true
-
-  handlers:
-    - name: Restart Docker service
-      ansible.builtin.service:
-        name: docker
-        state: restarted
+        path: "/home/{{ sudo_user }}/.hushlogin"
+        state: absent
