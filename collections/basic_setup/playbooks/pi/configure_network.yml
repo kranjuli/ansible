@@ -1,0 +1,74 @@
+---
+- name: Network configuration for Raspberry Pi
+  hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    hostname: "pi4dev"
+    # change ssid and password to your wifi ap credentials
+    wifi_ap_conn_name: "wifi-ap"
+    wifi_ap_interface: "wlan0"
+    wifi_ap_ssid: "TH-AP"
+    wifi_ap_pwd: "Your_Wifi_AP_Password"
+    wifi_ap_security: "wpa-psk"
+    wifi_ap_address: 192.168.50.1/24
+    wifi_ap_band: "bg"
+    wifi_ap_channel: 6
+    wifi_country_code: "DE"
+
+  tasks:
+    - name: NetworkManager is started and enabled
+      ansible.builtin.systemd:
+        name: NetworkManager
+        state: started
+        enabled: true
+
+    - name: Set WiFi country code
+      ansible.builtin.command:
+        cmd: "raspi-config nonint do_wifi_country {{ wifi_country_code }}"
+      changed_when: true
+
+    - name: WiFi is unblocked
+      ansible.builtin.command:
+        cmd: "rfkill unblock wifi"
+      changed_when: true
+
+    - name: WiFi radio is enabled
+      ansible.builtin.command:
+        cmd: "nmcli radio wifi on"
+      changed_when: false
+
+    - name: WiFi access point is configured
+      community.general.nmcli:
+        conn_name: "{{ wifi_ap_conn_name }}"
+        type: wifi
+        ifname: "{{ wifi_ap_interface }}"
+        ssid: "{{ wifi_ap_ssid }}"
+        wifi:
+          mode: ap
+          band: "{{ wifi_ap_band }}"
+          channel: "{{ wifi_ap_channel }}"
+        wifi_sec:
+          key-mgmt: "{{ wifi_ap_security }}"
+          psk: "{{ wifi_ap_pwd }}"
+          proto: 
+            - rsn
+          pairwise:
+            - ccmp
+          group:
+            - ccmp
+        ip4: 
+          - "{{ wifi_ap_address }}"
+        method4: shared
+        method6: disabled
+        autoconnect: true
+        state: present
+      no_log: true
+
+    - name: WiFi access point is enabled
+      community.general.nmcli:
+        conn_name: "{{ wifi_ap_conn_name }}"
+        state: up
+
+    - name: Reboot the Raspberry Pi to apply network configuration changes
+      ansible.builtin.reboot:
